@@ -1,0 +1,19 @@
+node_modules/
+.preview/
+dist/
+coverage/
+
+# Portable Record is committed; machine-local coordination and caches are not.
+.niceeval/cache/
+.niceeval/coordination/
+.niceeval/sandbox/
+.niceeval/sandboxes/
+.niceeval/sessions/
+.niceeval/tmp/
+.niceeval/*.lock
+
+# pnpm dev:link may leave machine-local diagnostics; its workspace override and
+# lockfile changes must be restored before committing.
+*.tgz
+*.log
+.DS_Store

@@ -1,0 +1,2 @@
+NiceEval preview attachment
+The deterministic adapter must report this file without reading the network.

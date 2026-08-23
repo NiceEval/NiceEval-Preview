@@ -1,0 +1,30 @@
+{
+  "name": "niceeval-preview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic full-featured Record fixture for the NiceEval report preview",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.18.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "list": "niceeval list",
+    "record:generate": "node scripts/generate-record.mjs",
+    "record:baseline": "niceeval exp gallery/baseline",
+    "record:reuse": "niceeval exp gallery/baseline",
+    "record:states": "node scripts/run-expected-nonzero.mjs states failed errored skipped",
+    "record:judge": "node scripts/run-expected-nonzero.mjs judge-unavailable unavailable errored",
+    "record:dry-reuse": "niceeval exp gallery/baseline --dry --json",
+    "preview:build": "niceeval view --out .preview"
+  },
+  "dependencies": {
+    "niceeval": "^0.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.2"
+  }
+}
