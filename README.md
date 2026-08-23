@@ -14,13 +14,13 @@ The committed Record is enough to render the full static site. Rendering never s
 
 | Feature | Definition / experiment | Durable Report evidence |
 | --- | --- | --- |
-| Rich Direct Agent events | `agents/deterministic.ts`, `gallery/events` | user/assistant messages, ordinary tool, command projection, thinking, subagent start/finish, `skill.loaded`, context injection, compaction, diagnostics, data, usage, and observed cost |
+| Rich Direct Agent events | `agents/deterministic.ts`, `gallery/events` | Report conversation items for messages, ordinary tool, command projection, subagent start/finish, `skill.loaded`, context injection, and recoverable error; Assertions additionally retain thinking/compaction presence, diagnostics, data, usage, and observed cost |
 | Files, turns, and sessions | `gallery/events` | `sendFile`, two turns in one session, a separate session, turn/session/attempt assertion scopes, tool/event order and counts |
-| Human input | `gallery/hitl` | a real `waiting` turn, `input.requested`, `requireInputRequest`, structured `respond`, pending and completed tool states |
+| Human input | `gallery/hitl` | a real `waiting` turn, `input.requested`, `requireInputRequest`, structured `respond`, plus pending and completed tool evidence across the two turns |
 | Pass gallery | `states/pass`, `gallery/*` | normal passed Verdicts and mixed Pass/Score populations |
 | Failed / errored / skipped | `states` | one deliberate failed Assertion, one thrown error, one explicit Pass skip, and one Score skip |
 | Score lifecycle | `score/rubric/{complete,zero,stopped,skipped}` | complete score, complete zero, mismatch-as-zero, direct score, measurement threshold, and points retained across `orStop` |
-| Assertion policy | `gallery/events`, `score/rubric/complete` | `t.group`, key, label, optional, gate, `atLeast`, `orStop`, and turn/session/attempt scopes |
+| Assertion policy | `gallery/events`, `states/pass`, `score/rubric/complete` | `t.group`, key, label, optional, gate, `atLeast`, `orStop`, positive/negative tool and event checks, no-tools/no-failed-actions checks, and turn/session/attempt scopes |
 | Complete public matcher gallery | `score/matchers` | matched and mismatched entries for `includes`, `excludes`, `pattern`, `includesUrl`, `hasSections`, `isDefined`, `isTrue`, `isFalse`, `equals`, `matches`, `satisfies`, `defineValueMatch`, `jsonMatch`, `referencesAnyPath`, `and`, `or`, `not`, `similarity`, `defineScoreMatch`, `commandSucceeded`, `toolMatch`, `commandMatch`, and `eventMatch` |
 | Offline Judge failure | `judge-unavailable` | declared Judge capability with no model configuration, retained as an unavailable/errored reason without a network call |
 | Eval Group Sandbox lane | `sandbox-group` | two Eval Group members share one Docker lane; `runCommand`, `runShell`, text/byte file IO, `changedPaths`, `fileChanged`, `fileDeleted`, and `notInDiff` |
@@ -37,18 +37,20 @@ The repository keeps `niceeval: ^0.13.3` as its public dependency baseline.
 corepack enable
 pnpm install --frozen-lockfile
 pnpm typecheck
-pnpm exec niceeval list
-pnpm exec niceeval exp list
 ```
 
-This proves that the example remains a valid published-package consumer. The committed Record is written by the current candidate and may intentionally use a format newer than `0.13.3`; render that Record after linking the candidate as described next.
+This proves that the source remains a valid consumer of the published public
+exports. The committed Record is written by the current candidate and may
+intentionally use a format newer than `0.13.3`; the older CLI can therefore
+reject the Record before discovery. Run CLI discovery and rendering only after
+linking the candidate as described next.
 
 ## Link a sibling NiceEval checkout
 
-Use this when validating an unreleased candidate. From this repository, with the candidate at `../better-preview`:
+Use this when validating an unreleased candidate. From this repository, with a sibling candidate checkout at `../NiceEval`:
 
 ```bash
-pnpm --dir ../better-preview dev:link "$PWD"
+pnpm --dir ../NiceEval dev:link "$PWD"
 pnpm typecheck
 pnpm exec niceeval list
 pnpm exec niceeval exp list
@@ -104,4 +106,4 @@ The JSON form exposes the unique matcher labels (for example `eventMatch:matched
 - The Direct Agents do not call `fetch`, inspect environment secrets, or configure a provider.
 - The fixed Docker image is used only while generating Record data.
 - `.niceeval/record/` is committed; coordination, caches, kept sandboxes, dependencies, static output, and local link traces are ignored.
-- This repository has no remote and its scripts do not push, publish, or send external messages.
+- Its scripts do not create remotes, push, publish, or send external messages.

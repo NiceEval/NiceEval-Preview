@@ -17,9 +17,12 @@ Minimum portable checkout checks:
 ```bash
 pnpm install --frozen-lockfile
 pnpm typecheck
-pnpm exec niceeval list
-pnpm exec niceeval exp list
+rg -n 'link:|better-preview|overrides:' package.json pnpm-workspace.yaml pnpm-lock.yaml
 git status --short
 ```
 
-After linking the current sibling candidate, also run `niceeval exp gallery/baseline --dry --json` and `niceeval view --out .preview`. The public dependency may predate the committed Record format, so static rendering is a candidate-link check.
+The `rg` check must have no matches. The public dependency may predate the
+committed Record format and can reject that future Record before CLI discovery.
+After linking the current sibling candidate, run `niceeval list`,
+`niceeval exp list`, `niceeval exp gallery/baseline --dry --json`, and
+`niceeval view --out .preview`.

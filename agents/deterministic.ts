@@ -34,8 +34,9 @@ function completedMessage(text: string): StreamEvent {
 }
 
 /**
- * A completely offline Direct Agent. It deliberately emits every durable
- * standard-event category that the built-in Report can render.
+ * A completely offline Direct Agent. It emits every standard conversation
+ * category that the built-in Report can retain, plus raw thinking and
+ * compaction events whose presence is recorded by Assertions.
  */
 export const deterministicAgent = defineAgent({
   name: "preview-deterministic-direct",
@@ -48,6 +49,7 @@ export const deterministicAgent = defineAgent({
 
     const held = ctx.session.take(pendingApproval);
     if (held !== undefined) {
+      const resumedOperationId = `${held.operationId}-resumed`;
       const response = input.responses?.find(
         (candidate) => candidate.requestId === held.requestId,
       );
@@ -61,13 +63,23 @@ export const deterministicAgent = defineAgent({
         usage: usage(),
         events: [
           {
+            type: "operation.started",
+            operationId: resumedOperationId,
+            operation: {
+              kind: "tool",
+              name: "deploy_preview",
+              input: { environment: "preview", revision: "deterministic" },
+              command: notCommandProjection(),
+            },
+          },
+          {
             type: "operation.finished",
-            operationId: held.operationId,
+            operationId: resumedOperationId,
             kind: "tool",
             output: { deployed: true, environment: "preview" },
             status: "completed",
           },
-          { type: "context.injected", text: "Human approved preview deploy", source: "hitl" },
+          { type: "context.injected", text: "Human approved preview deploy", source: "user" },
           completedMessage("Approval received; deterministic preview deploy completed."),
         ],
       };
@@ -185,9 +197,10 @@ export const deterministicAgent = defineAgent({
           {
             type: "context.injected",
             text: "Preview policy: never contact a provider.",
-            source: "preview-policy",
+            source: "system",
           },
           { type: "skill.loaded", skill: "preview-reporting", operationId: "skill-preview" },
+          { type: "error", message: "Intentional recoverable preview stream error." },
           {
             type: "operation.started",
             operationId: "subagent-preview",
