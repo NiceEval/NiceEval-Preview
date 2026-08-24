@@ -17,7 +17,7 @@ const pendingApproval = createSessionSlot<PendingApproval>(
 );
 const turnNumber = createSessionSlot<number>("niceeval-preview/turn-number");
 
-function usage(multiplier = 1): Usage {
+function usage(multiplier = 1, observedCost = true): Usage {
   return {
     inputTokens: 40 * multiplier,
     outputTokens: 12 * multiplier,
@@ -25,7 +25,7 @@ function usage(multiplier = 1): Usage {
     cacheCreationTokens: 4 * multiplier,
     reasoningTokens: 3 * multiplier,
     requests: 1,
-    costUSD: 0.000_04 * multiplier,
+    ...(observedCost ? { costUSD: 0.000_04 * multiplier } : {}),
   };
 }
 
@@ -60,7 +60,7 @@ export const deterministicAgent = defineAgent({
       return {
         status: "completed",
         data: { approved: true, requestId: held.requestId, ordinal },
-        usage: usage(),
+        usage: usage(1, false),
         events: [
           {
             type: "operation.started",
@@ -92,7 +92,7 @@ export const deterministicAgent = defineAgent({
       return {
         status: "waiting",
         data: { waitingFor: requestId, ordinal },
-        usage: usage(),
+        usage: usage(1, false),
         events: [
           { type: "thinking", text: "A human must approve the deterministic deploy." },
           {

@@ -13,11 +13,13 @@
     "typecheck": "tsc --noEmit",
     "list": "niceeval list",
     "record:generate": "node scripts/generate-record.mjs",
-    "record:baseline": "niceeval exp gallery/baseline",
-    "record:reuse": "niceeval exp gallery/baseline",
-    "record:states": "node scripts/run-expected-nonzero.mjs states failed errored skipped",
+    "record:pass-baseline": "niceeval exp pass-gallery/baseline",
+    "record:score-baseline": "niceeval exp score-gallery/baseline",
+    "record:reuse": "niceeval exp pass-gallery/baseline",
+    "record:pass-states": "node scripts/run-expected-nonzero.mjs pass-states failed errored skipped",
+    "record:score-states": "niceeval exp score-states",
     "record:judge": "node scripts/run-expected-nonzero.mjs judge-unavailable unavailable errored",
-    "record:dry-reuse": "niceeval exp gallery/baseline --dry --json",
+    "record:dry-reuse": "niceeval exp pass-gallery/baseline --dry --json",
     "preview:build": "niceeval view --out .preview"
   },
   "dependencies": {

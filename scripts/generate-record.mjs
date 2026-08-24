@@ -34,15 +34,18 @@ await rm(new URL("../.niceeval", import.meta.url), {
   force: true,
 });
 
-run(["exec", "niceeval", "exp", "gallery/baseline"]);
-run(["exec", "niceeval", "exp", "gallery/candidate"]);
-run(["exec", "niceeval", "exp", "states"], 1, ["failed", "errored", "skipped"]);
+run(["exec", "niceeval", "exp", "pass-gallery/baseline"]);
+run(["exec", "niceeval", "exp", "pass-gallery/candidate"]);
+run(["exec", "niceeval", "exp", "score-gallery/baseline"]);
+run(["exec", "niceeval", "exp", "score-gallery/candidate"]);
+run(["exec", "niceeval", "exp", "pass-states"], 1, ["failed", "errored", "skipped"]);
+run(["exec", "niceeval", "exp", "score-states"], 0, ["skipped"]);
 run(["exec", "niceeval", "exp", "judge-unavailable"], 1, ["unavailable", "errored"]);
 run(["exec", "niceeval", "exp", "sandbox-group"]);
 run(["exec", "niceeval", "exp", "sandbox-reuse"]);
 
 // The second identical invocation must publish reference Members with carried
 // provenance, not silently skip creating a Run.
-run(["exec", "niceeval", "exp", "gallery/baseline"]);
+run(["exec", "niceeval", "exp", "pass-gallery/baseline"]);
 
-process.stdout.write("\nrecord generation complete, including a second carried/reused baseline Run\n");
+process.stdout.write("\nrecord generation complete, including separate Pass/Score comparisons and a second carried/reused baseline Run\n");

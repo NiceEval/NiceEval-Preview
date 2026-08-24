@@ -16,18 +16,18 @@ The committed Record is enough to render the full static site. Rendering never s
 | --- | --- | --- |
 | Rich Direct Agent events | `agents/deterministic.ts`, `gallery/events` | Report conversation items for messages, ordinary tool, command projection, subagent start/finish, `skill.loaded`, context injection, and recoverable error; Assertions additionally retain thinking/compaction presence, diagnostics, data, usage, and observed cost |
 | Files, turns, and sessions | `gallery/events` | `sendFile`, two turns in one session, a separate session, turn/session/attempt assertion scopes, tool/event order and counts |
-| Human input | `gallery/hitl` | a real `waiting` turn, `input.requested`, `requireInputRequest`, structured `respond`, plus pending and completed tool evidence across the two turns |
-| Pass gallery | `states/pass`, `gallery/*` | normal passed Verdicts and mixed Pass/Score populations |
-| Failed / errored / skipped | `states` | one deliberate failed Assertion, one thrown error, one explicit Pass skip, and one Score skip |
+| Human input | `gallery/hitl` | a real `waiting` turn, `input.requested`, `requireInputRequest`, structured `respond`, plus pending and completed tool evidence across the two turns; token usage is retained while observed cost is intentionally absent to exercise partial cost comparison |
+| Pass gallery | `states/pass`, `gallery/*` | normal passed Verdicts and comparable Pass-only populations |
+| Failed / errored / skipped | `pass-states`, `score-states` | one deliberate failed Assertion, one thrown error, one explicit Pass skip, and one separately admitted Score skip |
 | Score lifecycle | `score/rubric/{complete,zero,stopped,skipped}` | complete score, complete zero, mismatch-as-zero, direct score, measurement threshold, and points retained across `orStop` |
 | Assertion policy | `gallery/events`, `states/pass`, `score/rubric/complete` | `t.group`, key, label, optional, gate, `atLeast`, `orStop`, positive/negative tool and event checks, no-tools/no-failed-actions checks, and turn/session/attempt scopes |
 | Complete public matcher gallery | `score/matchers` | matched and mismatched entries for `includes`, `excludes`, `pattern`, `includesUrl`, `hasSections`, `isDefined`, `isTrue`, `isFalse`, `equals`, `matches`, `satisfies`, `defineValueMatch`, `jsonMatch`, `referencesAnyPath`, `and`, `or`, `not`, `similarity`, `defineScoreMatch`, `commandSucceeded`, `toolMatch`, `commandMatch`, and `eventMatch` |
 | Offline Judge failure | `judge-unavailable` | declared Judge capability with no model configuration, retained as an unavailable/errored reason without a network call |
 | Eval Group Sandbox lane | `sandbox-group` | two Eval Group members share one Docker lane; `runCommand`, `runShell`, text/byte file IO, `changedPaths`, `fileChanged`, `fileDeleted`, and `notInDiff` |
 | Independent Sandbox reuse lane | `sandbox-reuse` | two attempts reuse/reset one Sandbox outside an Eval Group and prove the prior attempt's file is absent |
-| Comparable Experiments | `gallery/baseline`, `gallery/candidate` | same top-level group with different model, reasoning, flags, labels, attempts, early-exit policy, and explicit-versus-predicate Eval selection |
-| Additional Experiment shapes | `states`, `judge-unavailable`, `sandbox-group`, `sandbox-reuse` | root singletons, Eval selector, Eval Group, Sandbox reuse, and mixed Pass/Score populations |
-| Record reuse | the two committed `gallery/baseline` Runs | the second identical invocation publishes carried/reused members rather than silently skipping a Run |
+| Comparable Experiments | `pass-gallery/{baseline,candidate}`, `score-gallery/{baseline,candidate}` | separate same-kind groups with different model, reasoning, flags, labels, attempts, early-exit policy, and explicit-versus-predicate Eval selection |
+| Additional Experiment shapes | `pass-states`, `score-states`, `judge-unavailable`, `sandbox-group`, `sandbox-reuse` | root singletons, Eval selector, homogeneous Eval Group, Sandbox reuse, and separate Pass/Score populations |
+| Record reuse | the two committed `pass-gallery/baseline` Runs | the second identical invocation publishes carried/reused members rather than silently skipping a Run |
 
 ## Use the published package
 
@@ -69,12 +69,12 @@ Regeneration is offline, but it executes Docker for the two Sandbox experiments.
 pnpm record:generate
 ```
 
-The script starts a fresh `.niceeval` generation epoch, runs both gallery members, accepts exit code `1` only for the explicit state and Judge galleries while checking named output markers, runs the Eval Group and independent `sandboxReuse` lanes, and finally runs `gallery/baseline` a second time. Any unexpected exit code or missing marker fails the script.
+The script starts a fresh `.niceeval` generation epoch, runs both Pass gallery members and both Score gallery members, accepts exit code `1` only for the explicit Pass state and Judge galleries, checks the successful Score skip separately, runs the homogeneous Eval Group and independent `sandboxReuse` lanes, and finally runs `pass-gallery/baseline` a second time. Any unexpected exit code or missing marker fails the script.
 
 Confirm that the final invocation is truly reusable:
 
 ```bash
-pnpm exec niceeval exp gallery/baseline --dry --json
+pnpm exec niceeval exp pass-gallery/baseline --dry --json
 ```
 
 The JSON plan must contain `"state":"reuse"` slots and a non-zero `reused` count. Running the same experiment once more must print a carried-in count:
@@ -88,13 +88,16 @@ pnpm record:reuse
 Do not inspect `.niceeval/record` files directly. Use the Report API exposed by the CLI:
 
 ```bash
-pnpm exec niceeval show --experiment gallery/baseline
-pnpm exec niceeval show --experiment gallery/candidate
-pnpm exec niceeval show --experiment states
+pnpm exec niceeval show --experiment pass-gallery/baseline
+pnpm exec niceeval show --experiment pass-gallery/candidate
+pnpm exec niceeval show --experiment score-gallery/baseline
+pnpm exec niceeval show --experiment score-gallery/candidate
+pnpm exec niceeval show --experiment pass-states
+pnpm exec niceeval show --experiment score-states
 pnpm exec niceeval show --experiment judge-unavailable
 pnpm exec niceeval show --experiment sandbox-group
 pnpm exec niceeval show --experiment sandbox-reuse
-pnpm exec niceeval show --experiment gallery/candidate --json
+pnpm exec niceeval show --experiment pass-gallery/candidate --json
 pnpm exec niceeval view --out .preview
 ```
 
