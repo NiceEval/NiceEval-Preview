@@ -1,11 +1,12 @@
 import { dockerSandbox } from "niceeval/sandbox";
 
 /**
- * Cached, immutable Node 24 runtime used only while regenerating the Record.
+ * Official, immutable Node 24 runtime used only while regenerating the Record.
+ * NiceEval pulls it on a cold Docker host and reuses Docker's local cache.
  * Static report rendering reads the committed Record and never starts Docker.
  */
 export const PREVIEW_NODE_IMAGE =
-  "offline.invalid/niceeval-harness/runtime:node@sha256:1e0d594317c429f60cd5b116bc31b3ffd76f5b3ff0217e562da88dd3e46f7ed3";
+  "node:24-slim@sha256:cd84903a12dbd26b46f1f3b8144a2568c41c5d37ddd0c7a80a34c7a19786b35f";
 
 export function previewNodeSandbox() {
   return dockerSandbox({

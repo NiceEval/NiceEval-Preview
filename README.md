@@ -2,13 +2,13 @@
 
 This repository is the deterministic data source for the NiceEval Report preview. It is a real, standalone NiceEval consumer: all examples use public package exports and all committed data under `.niceeval/record/` was produced through the public CLI.
 
-The committed Record is enough to render the full static site. Rendering never starts Docker, reads a secret, contacts a provider, or makes a paid model call. Docker is needed only when deliberately regenerating the two Sandbox lanes.
+The committed Record is enough to render the full static site. Rendering never starts Docker, reads a secret, contacts a provider, or makes a paid model call. Docker is needed only when deliberately regenerating the two Sandbox lanes; on a cold host NiceEval pulls the pinned official image and then reuses Docker's cache.
 
 ## Requirements
 
 - Node.js 24 or newer
 - pnpm 11.18.0
-- Docker only for `pnpm record:generate`; the immutable image in [`sandboxes/node.ts`](sandboxes/node.ts) must already be cached
+- Docker only for `pnpm record:generate`; a cold cache also needs access to Docker Hub for the immutable official image in [`sandboxes/node.ts`](sandboxes/node.ts)
 
 ## Feature map
 
@@ -63,7 +63,7 @@ Open `.preview/index.html` through a static file server, or publish `.preview/` 
 
 ## Regenerate the Record
 
-Regeneration is offline, but it executes Docker for the two Sandbox experiments. Ensure the fixed digest image in `sandboxes/node.ts` is already cached; the intentionally invalid registry hostname makes an accidental pull fail instead of contacting a registry.
+Regeneration uses deterministic Direct Agents and makes no model or provider call, but it executes Docker for the two Sandbox experiments. NiceEval resolves the official image pinned in `sandboxes/node.ts`, pulls it when absent, and reuses the local Docker cache afterward.
 
 ```bash
 pnpm record:generate
