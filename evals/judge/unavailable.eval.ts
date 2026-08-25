@@ -1,5 +1,4 @@
 import { defineEval } from "niceeval";
-import { closedQA } from "niceeval/expect";
 
 export default defineEval({
   description: "Judge capability without model configuration: zero-network unavailable path",
@@ -8,10 +7,8 @@ export default defineEval({
   async test(t) {
     const turn = await t.send("preview/state/judge-unavailable");
     turn.succeeded().label("Direct Agent completed before Judge evaluation");
-    turn.check(
-      { input: turn.input, output: turn.message },
-      closedQA("Does the reply name judge-unavailable?").atLeast(1),
-    ).gate()
+    turn.judge.autoevals.closedQA("Does the reply name judge-unavailable?")
+      .gate(1)
       .label("Zero-network unavailable Judge");
   },
 });

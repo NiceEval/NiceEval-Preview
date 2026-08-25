@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { rm } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 
 const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
@@ -17,7 +17,8 @@ function run(args, expectedStatus = 0, expectedFragments = []) {
       `pnpm ${args.join(" ")} exited ${String(result.status)}; expected ${expectedStatus}`,
     );
   }
-  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`.toLowerCase();
+  const rawOutput = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  const output = rawOutput.toLowerCase();
   for (const fragment of expectedFragments) {
     if (!output.includes(fragment.toLowerCase())) {
       throw new Error(
@@ -25,6 +26,12 @@ function run(args, expectedStatus = 0, expectedFragments = []) {
       );
     }
   }
+  const runIds = [...rawOutput.matchAll(/details: niceeval show --run ([0-9a-f-]{36})/gu)]
+    .map((match) => match[1]);
+  if (runIds.length !== 1) {
+    throw new Error(`pnpm ${args.join(" ")} did not expose exactly one completed Run id`);
+  }
+  return runIds[0];
 }
 
 // Record identity and its machine-local Coordination state are one generation
@@ -34,18 +41,28 @@ await rm(new URL("../.niceeval", import.meta.url), {
   force: true,
 });
 
+const runIds = [];
+// The first baseline Run remains in the Record as reuse provenance. The static
+// selection uses only the later carried Run so historical membership rows keep
+// one identity per Attempt.
 run(["exec", "niceeval", "exp", "pass-gallery/baseline"]);
-run(["exec", "niceeval", "exp", "pass-gallery/candidate"]);
-run(["exec", "niceeval", "exp", "score-gallery/baseline"]);
-run(["exec", "niceeval", "exp", "score-gallery/candidate"]);
-run(["exec", "niceeval", "exp", "pass-states"], 1, ["failed", "errored", "skipped"]);
-run(["exec", "niceeval", "exp", "score-states"], 0, ["skipped"]);
-run(["exec", "niceeval", "exp", "judge-unavailable"], 1, ["unavailable", "errored"]);
-run(["exec", "niceeval", "exp", "sandbox-group"]);
-run(["exec", "niceeval", "exp", "sandbox-reuse"]);
+runIds.push(run(["exec", "niceeval", "exp", "pass-gallery/candidate"]));
+runIds.push(run(["exec", "niceeval", "exp", "score-gallery/baseline"]));
+runIds.push(run(["exec", "niceeval", "exp", "score-gallery/candidate"]));
+runIds.push(run(["exec", "niceeval", "exp", "pass-states"], 1, ["failed", "errored", "skipped"]));
+runIds.push(run(["exec", "niceeval", "exp", "score-states"], 0, ["skipped"]));
+runIds.push(run(["exec", "niceeval", "exp", "judge-unavailable"], 1, ["unavailable", "errored"]));
+runIds.push(run(["exec", "niceeval", "exp", "sandbox-group"]));
+runIds.push(run(["exec", "niceeval", "exp", "sandbox-reuse"]));
 
 // The second identical invocation must publish reference Members with carried
 // provenance, not silently skip creating a Run.
-run(["exec", "niceeval", "exp", "pass-gallery/baseline"]);
+runIds.push(run(["exec", "niceeval", "exp", "pass-gallery/baseline"]));
+
+await writeFile(
+  new URL("../preview-runs.json", import.meta.url),
+  `${JSON.stringify({ format: "niceeval.preview-runs/v1", runIds }, null, 2)}\n`,
+  "utf8",
+);
 
 process.stdout.write("\nrecord generation complete, including separate Pass/Score comparisons and a second carried/reused baseline Run\n");

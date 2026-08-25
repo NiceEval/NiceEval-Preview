@@ -20,7 +20,7 @@
     "record:score-states": "niceeval exp score-states",
     "record:judge": "node scripts/run-expected-nonzero.mjs judge-unavailable unavailable errored",
     "record:dry-reuse": "niceeval exp pass-gallery/baseline --dry --json",
-    "preview:build": "niceeval view --out .preview"
+    "preview:build": "node scripts/build-preview.mjs"
   },
   "dependencies": {
     "niceeval": "^0.13.3"

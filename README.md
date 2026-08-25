@@ -54,10 +54,10 @@ pnpm --dir ../NiceEval dev:link "$PWD"
 pnpm typecheck
 pnpm exec niceeval list
 pnpm exec niceeval exp list
-pnpm exec niceeval view --out .preview
+pnpm preview:build
 ```
 
-Open `.preview/index.html` through a static file server, or publish `.preview/` as the Netlify directory. A preview CI job needs only this repository clone, an install followed by the candidate link above, and `niceeval view --out`; it does not regenerate data or start Docker.
+Open `.preview/index.html` through a static file server, or publish `.preview/` as the Netlify directory. A preview CI job needs only this repository clone, an install followed by the candidate link above, and `pnpm preview:build`; it does not regenerate data or start Docker. The generated [`preview-runs.json`](preview-runs.json) selects the exact complete Runs produced by the same generation epoch, so an unreleased candidate Record remains renderable while the executable eval source stays compatible with the published package baseline.
 
 `dev:link` deliberately adds a workspace override and rewrites the lockfile. Those are local test inputs, not repository state. After validation, restore `pnpm-workspace.yaml` to its checked-in public form (remove the `overrides` block), then run `pnpm install` so the lockfile resolves `niceeval` from the registry again. Do not commit a `link:` dependency.
 
@@ -69,7 +69,7 @@ Regeneration uses deterministic Direct Agents and makes no model or provider cal
 pnpm record:generate
 ```
 
-The script starts a fresh `.niceeval` generation epoch, runs both Pass gallery members and both Score gallery members, accepts exit code `1` only for the explicit Pass state and Judge galleries, checks the successful Score skip separately, runs the homogeneous Eval Group and independent `sandboxReuse` lanes, and finally runs `pass-gallery/baseline` a second time. Any unexpected exit code or missing marker fails the script.
+The script starts a fresh `.niceeval` generation epoch, runs both Pass gallery members and both Score gallery members, accepts exit code `1` only for the explicit Pass state and Judge galleries, checks the successful Score skip separately, runs the homogeneous Eval Group and independent `sandboxReuse` lanes, and finally runs `pass-gallery/baseline` a second time. It writes one selected complete Run per experiment to `preview-runs.json`, using the second carried baseline Run while retaining the first as reuse provenance in the Record. Any unexpected exit code, missing marker, or missing Run id fails the script.
 
 Confirm that the final invocation is truly reusable:
 
@@ -98,7 +98,7 @@ pnpm exec niceeval show --experiment judge-unavailable
 pnpm exec niceeval show --experiment sandbox-group
 pnpm exec niceeval show --experiment sandbox-reuse
 pnpm exec niceeval show --experiment pass-gallery/candidate --json
-pnpm exec niceeval view --out .preview
+pnpm preview:build
 ```
 
 The JSON form exposes the unique matcher labels (for example `eventMatch:matched` and `eventMatch:mismatched`), `skill-load` conversation items, diagnostics, score contributions, Eval Group identity, and origin/reference membership for carried Runs.
@@ -108,5 +108,5 @@ The JSON form exposes the unique matcher labels (for example `eventMatch:matched
 - No example imports NiceEval private source or reads private Record files.
 - The Direct Agents do not call `fetch`, inspect environment secrets, or configure a provider.
 - The fixed Docker image is used only while generating Record data.
-- `.niceeval/record/` is committed; coordination, caches, kept sandboxes, dependencies, static output, and local link traces are ignored.
+- `.niceeval/record/` and its generated `preview-runs.json` selection are committed; coordination, caches, kept sandboxes, dependencies, static output, and local link traces are ignored.
 - Its scripts do not create remotes, push, publish, or send external messages.
