@@ -9,7 +9,7 @@ on:
       candidate_sha:
         description: "Exact 40-character NiceEval commit SHA"
         required: true
-        default: "8a608306061a29f810ab92b541ef84c8204c593c"
+        default: "8ee6c38a0dad9bc5b30ffeed5a12152308007172"
         type: string
 
 permissions:
@@ -25,7 +25,7 @@ jobs:
       - name: Validate candidate SHA
         id: candidate
         env:
-          REQUESTED_SHA: ${{ inputs.candidate_sha || '8a608306061a29f810ab92b541ef84c8204c593c' }}
+          REQUESTED_SHA: ${{ inputs.candidate_sha || '8ee6c38a0dad9bc5b30ffeed5a12152308007172' }}
         shell: bash
         run: |
           set -euo pipefail
