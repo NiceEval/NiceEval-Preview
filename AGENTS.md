@@ -1,30 +1,38 @@
 # Repository instructions
 
-This repository is a standalone public consumer and deterministic Report fixture for NiceEval.
+This repository dogfoods NiceEval's fixed first-party View and machine
+Inspection. It is a real public-package consumer, not a Report or page
+fixture.
 
-- Keep all eval, experiment, Agent, Sandbox, and Report interactions on public `niceeval`, `niceeval/adapter`, `niceeval/expect`, and `niceeval/sandbox` exports. Never import a sibling checkout's source files.
-- Validate Record behavior only with `niceeval list`, `niceeval exp`, `niceeval show`, and `niceeval view`. Do not inspect or derive expectations from `.niceeval/record` internals.
-- Preserve deterministic execution. Direct Agents must not read secrets, call providers, use `fetch`, or access the network. Sandbox lanes use the official immutable image in `sandboxes/node.ts`; NiceEval may pull it on a cold Docker host and then reuses Docker's cache. Do not invent a private image alias or a separate prewarming contract.
-- Static preview rendering must work from the committed Record without Docker or secrets. Docker belongs only to explicit Record regeneration.
-- Keep `package.json` on the public `niceeval` range. A sibling `pnpm dev:link` may temporarily add a workspace override and `link:` lock entries; remove the override with an explicit edit and run normal `pnpm install` before committing. Do not use reset, restore, checkout, stash, or clean to discard changes.
-- Regenerate with `pnpm record:generate`. The Pass state and Judge experiments intentionally exit `1`; only the checked helper may accept that exact status and its named output evidence. The standalone Score skip succeeds with exit `0` and must still expose its named output evidence. A cold Docker host may download the pinned official image; no model or provider call is involved.
-- Preserve matched and mismatched persisted Score entries for every public matcher exported by `niceeval/expect`; a new public matcher requires a labeled pair here.
-- Keep every Experiment and Eval Group homogeneous. Pass and Score comparisons use separate top-level experiment groups while sharing deterministic Agent configuration.
-- Preserve the two mutually exclusive Sandbox shapes: an Eval Group owns the shared Group lane, while the separate experiment owns the `sandboxReuse` lane. Never combine Group membership with experiment `sandboxReuse`.
-- Commit `.niceeval/record/` but never coordination state, caches, dependencies, `.preview/`, kept sandboxes, or local link traces.
+- Keep eval and Agent imports on public `niceeval`, `niceeval/adapter`, and
+  `niceeval/expect` exports. Never import a sibling checkout's source files.
+- The only product-facing dogfood command is `pnpm dogfood:inspection`. It
+  creates two sealed deterministic Runs, exports a `RecordSnapshot`, discovers
+  the fixed query catalog, runs every fixed operation, and verifies a loopback
+  `niceeval view` lifecycle.
+- The dogfood path is deterministic: its Direct Agent must not read secrets,
+  call providers, use `fetch`, or access the network. It must not invoke
+  Docker or a Sandbox.
+- Read Record facts only through `niceeval record snapshot`, `niceeval query`,
+  and `niceeval view`. Do not read `.niceeval/` or a snapshot as a private
+  data format.
+- `query` is for AI and CI. `view` is for people. Do not add `show`,
+  `insight`, Report/Page/Analysis definitions, custom themes, renderers, or
+  static HTML export.
+- Keep `package.json` on the public `niceeval` range. A parent agent may link
+  an unreleased candidate only for final acceptance; remove any temporary
+  workspace override and `link:` lock entries before committing.
+- `.niceeval/` is generated local state. Never commit an operational Record,
+  copied SQLite database, static output directory, or query scratch file.
+- Preserve unknown changes. Do not use reset, restore, checkout, stash, or
+  clean to discard work. Do not create remotes, push, publish, or send
+  external messages.
 
-Minimum portable checkout checks:
+Minimum portable check after the compatible candidate has been linked:
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm typecheck
-rg -n 'link:|better-preview|overrides:' package.json pnpm-workspace.yaml pnpm-lock.yaml
+pnpm dogfood:inspection
 git status --short
 ```
-
-The `rg` check must have no matches. The public dependency may predate the
-committed Record format and can reject that future Record before CLI discovery.
-After linking the current sibling candidate, run `niceeval list`,
-`niceeval exp list`, `niceeval exp pass-gallery/baseline --dry --json`,
-`niceeval exp score-gallery/baseline --dry --json`, and
-`niceeval view --out .preview`.

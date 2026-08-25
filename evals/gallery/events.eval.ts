@@ -35,20 +35,17 @@ export default defineEval({
           input: jsonMatch({ path: "fixtures/brief.txt" }),
           output: jsonMatch({ found: true }),
           status: "completed",
-        }),
-        { count: 1 },
+        }).exactly(1),
       ).key("ordinary-tool").label("Ordinary tool completed");
       events.calledTool(
-        commandMatch("node", { argsStart: ["--version"], status: "completed" }),
-        { count: 1 },
+        commandMatch("node", { argsStart: ["--version"], status: "completed" }).exactly(1),
       ).key("command-projection").label("Command projection completed");
       events.toolOrder([
         toolMatch("lookup_fixture"),
         commandMatch("node", { argsStart: ["--version"] }),
       ]).label("Tool order is stable");
-      events.event(eventMatch("message", { role: "assistant", text: includes("PREVIEW_OK") }), {
-        count: 1,
-      }).label("Assistant message event");
+      events.event(eventMatch("message", { role: "assistant", text: includes("PREVIEW_OK") }).exactly(1))
+        .label("Assistant message event");
       events.eventOrder([
         eventMatch("operation.started", { tool: toolMatch("lookup_fixture") }),
         eventMatch("operation.finished", { tool: toolMatch("lookup_fixture") }),
@@ -65,13 +62,12 @@ export default defineEval({
       events.maxCost(0.01).label("Turn observed cost is bounded");
       const eventData: unknown = events.data;
       t.check(eventData, isDefined<unknown>("event gallery data")).label("Structured data exists");
-      t.check(events.message, exactSimilarity)
-        .atLeast(1)
+      t.check(events.message, exactSimilarity.atLeast(1))
         .label("Measurement threshold is recorded");
       t.check(events.message, defineScoreMatch({
         name: "preview gate measurement",
         score: (value: string) => (value.includes("PREVIEW_OK") ? 1 : 0),
-      })).gate(1).label("Measurement gate passes");
+      }).atLeast(1)).gate().label("Measurement gate passes");
       t.check(events.events, satisfies("skill.loaded exists", (items) =>
         items.some((event) => event.type === "skill.loaded" && event.skill === "preview-reporting"),
       )).label("Skill load is recorded");
@@ -109,14 +105,14 @@ export default defineEval({
     const branchTurn = await branch.send("preview/session-first");
 
     await t.group("Session and turn scopes", () => {
-      first.calledTool("session_note", { count: 1 }).label("First turn tool count");
-      second.calledTool("session_note", { count: 1 }).label("Second turn tool count");
-      main.calledTool("session_note", { count: 2 }).label("Main session aggregate count");
+      first.calledTool(toolMatch("session_note").exactly(1)).label("First turn tool count");
+      second.calledTool(toolMatch("session_note").exactly(1)).label("Second turn tool count");
+      main.calledTool(toolMatch("session_note").exactly(2)).label("Main session aggregate count");
       main.toolOrder([toolMatch("session_note"), toolMatch("session_note")])
         .label("Main session spans two turns in order");
       main.notCalledTool("missing_session_tool").label("Missing session tool is absent");
       main.noFailedActions().label("Main session has no failed actions");
-      branch.calledTool("session_note", { count: 1 }).label("Branch session is isolated");
+      branch.calledTool(toolMatch("session_note").exactly(1)).label("Branch session is isolated");
       t.check(second.message, includes("Session second reply"));
       const branchData = requireJson(branchTurn.data);
       t.check(branchData, jsonMatch({ marker: "first", ordinal: 1 }))

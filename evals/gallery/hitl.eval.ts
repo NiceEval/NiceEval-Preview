@@ -8,7 +8,7 @@ export default defineEval({
   async test(t) {
     const waiting = await t.send("preview/hitl");
     t.check(waiting.status, equals("waiting")).label("HITL turn waits");
-    waiting.calledTool(toolMatch("deploy_preview", { status: "pending" }), { count: 1 })
+    waiting.calledTool(toolMatch("deploy_preview", { status: "pending" }).exactly(1))
       .label("Pending tool is visible before approval");
     const request = t.requireInputRequest({
       id: "preview-deploy-approval",
@@ -20,7 +20,7 @@ export default defineEval({
     });
     const resumed = await t.respond({ request, optionId: "approve" });
     resumed.succeeded().label("HITL response resumes the session");
-    t.calledTool(toolMatch("deploy_preview", { status: "completed" }), { count: 1 })
+    t.calledTool(toolMatch("deploy_preview", { status: "completed" }).exactly(1))
       .label("Approved tool completes");
     t.maxTokens(200).label("HITL usage spans waiting and resumed turns");
     t.maxCost(0.01).label("HITL observed cost remains offline-sized");

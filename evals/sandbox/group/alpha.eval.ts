@@ -26,7 +26,7 @@ export default defineEval({
 
     const turn = await t.send("sandbox/group-alpha");
     turn.succeeded().label("Sandbox Group A Agent completed");
-    turn.calledTool(toolMatch("workspace_edit", { status: "completed" }), { count: 1 });
+    turn.calledTool(toolMatch("workspace_edit", { status: "completed" }).exactly(1));
 
     const shellProbe = await t.sandbox.runShell(
       "test -f workspace/modified.txt && test -f workspace/created.txt && test ! -e workspace/delete-me.txt",

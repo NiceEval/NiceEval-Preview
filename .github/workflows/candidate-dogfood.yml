@@ -1,0 +1,125 @@
+name: Dogfood NiceEval candidate
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: "Exact 40-character NiceEval commit SHA"
+        required: true
+        default: "8a608306061a29f810ab92b541ef84c8204c593c"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  dogfood:
+    name: Fixed query and live View dogfood
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Validate candidate SHA
+        id: candidate
+        env:
+          REQUESTED_SHA: ${{ inputs.candidate_sha || '8a608306061a29f810ab92b541ef84c8204c593c' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$REQUESTED_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "::error title=Invalid candidate SHA::candidate_sha must be exactly 40 hexadecimal characters"
+            exit 2
+          fi
+          printf 'sha=%s\n' "${REQUESTED_SHA,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout NiceEval-Preview
+        uses: actions/checkout@v7
+        with:
+          path: preview
+          persist-credentials: false
+
+      - name: Checkout exact NiceEval candidate
+        uses: actions/checkout@v7
+        with:
+          repository: NiceEval/NiceEval
+          ref: ${{ steps.candidate.outputs.sha }}
+          path: niceeval-candidate
+          persist-credentials: false
+
+      - name: Verify candidate identity
+        env:
+          EXPECTED_SHA: ${{ steps.candidate.outputs.sha }}
+        working-directory: niceeval-candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          if [[ "$actual_sha" != "$EXPECTED_SHA" ]]; then
+            echo "::error title=Candidate identity mismatch::expected=$EXPECTED_SHA actual=$actual_sha"
+            exit 1
+          fi
+          echo "Candidate commit: $actual_sha"
+
+      - name: Set up pinned pnpm and Node
+        uses: pnpm/setup@v2
+        with:
+          version: 11.18.0
+          runtime: node@24
+          install: false
+
+      - name: Verify toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm_version="$(pnpm --version)"
+          node_major="$(node -p 'process.versions.node.split(".")[0]')"
+          if [[ "$pnpm_version" != "11.18.0" ]]; then
+            echo "::error title=pnpm version mismatch::expected=11.18.0 actual=$pnpm_version"
+            exit 1
+          fi
+          if [[ "$node_major" != "24" ]]; then
+            echo "::error title=Node version mismatch::expected major=24 actual=$(node --version)"
+            exit 1
+          fi
+          echo "Toolchain: Node $(node --version), pnpm $pnpm_version"
+
+      - name: Install candidate dependencies
+        working-directory: niceeval-candidate
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Preview dependencies
+        working-directory: preview
+        run: pnpm install --frozen-lockfile
+
+      - name: Link candidate into Preview
+        env:
+          PREVIEW_ROOT: ${{ github.workspace }}/preview
+        working-directory: niceeval-candidate
+        run: pnpm consumer:link apply --json "$PREVIEW_ROOT"
+
+      - name: Verify resolved candidate link
+        env:
+          PREVIEW_ROOT: ${{ github.workspace }}/preview
+        working-directory: niceeval-candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm consumer:link check --json "$PREVIEW_ROOT"
+          expected="$(realpath packages/niceeval)"
+          actual="$(realpath "$PREVIEW_ROOT/node_modules/niceeval")"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error title=Resolved link mismatch::expected=$expected actual=$actual"
+            exit 1
+          fi
+          echo "Resolved niceeval link: $actual"
+
+      - name: Typecheck Preview
+        working-directory: preview
+        run: pnpm typecheck
+
+      - name: Dogfood fixed query and live View
+        working-directory: preview
+        run: pnpm dogfood:inspection

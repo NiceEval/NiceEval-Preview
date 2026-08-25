@@ -1,16 +1,11 @@
 node_modules/
-.preview/
+.niceeval/
+.niceeval-preview-dogfood-*/
 dist/
 coverage/
 
-# Portable Record is committed; machine-local coordination and caches are not.
-.niceeval/cache/
-.niceeval/coordination/
-.niceeval/sandbox/
-.niceeval/sandboxes/
-.niceeval/sessions/
-.niceeval/tmp/
-.niceeval/*.lock
+# Fixed View consumes a CLI-created, sealed RecordSnapshot. The dogfood script
+# writes both it and temporary versioned query requests outside this checkout.
 
 # pnpm dev:link may leave machine-local diagnostics; its workspace override and
 # lockfile changes must be restored before committing.
