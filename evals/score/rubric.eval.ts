@@ -19,7 +19,7 @@ const complete = defineScoreEval({
       t.check(turn.message, defineScoreMatch({
         name: "rubric measurement",
         score: (value: string) => (value.includes("score-complete") ? 0.75 : 0),
-      })).atLeast(0.5).score(4).label("Measurement contributes three points");
+      }).atLeast(0.5)).score(4).label("Measurement contributes three points");
       t.score(1).key("direct-score").label("Direct score contribution");
     });
   },
