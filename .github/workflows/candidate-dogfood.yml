@@ -49,4 +49,5 @@ jobs:
         with:
           name: niceeval-viewrevision-preview
           path: .preview-site
+          include-hidden-files: true
           if-no-files-found: error
