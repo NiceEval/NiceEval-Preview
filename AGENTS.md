@@ -2,16 +2,17 @@
 
 This repository dogfoods NiceEval's fixed first-party View and machine
 Inspection. It is a real public-package consumer, not a Report or page
-fixture. It also owns only the static deployment orchestration for a sealed
-ViewRevision; NiceEval owns the reader, Inspection, renderer, links, and UI.
+fixture. NiceEval owns the candidate, Netlify site/check, reader, Inspection,
+renderer, links, and UI; this repository owns only the controlled consumer
+fixture and its ViewRevision build/verification commands.
 
 - Keep eval and Agent imports on public `niceeval`, `niceeval/adapter`, and
   `niceeval/expect` exports. Never import a sibling checkout's source files.
 - The only product-facing dogfood command is `pnpm dogfood:inspection`. It
-  creates two sealed deterministic Runs, exports a `RecordSnapshot`, discovers
+  creates two sealed controlled Runs, exports a `RecordSnapshot`, discovers
   the fixed query catalog, runs every fixed operation, and verifies a loopback
   `niceeval view` lifecycle.
-- The dogfood path is deterministic: its Direct Agent must not read secrets,
+- The dogfood path is offline and provider-free: its Direct Agent must not read secrets,
   call providers, use `fetch`, or access the network. It must not invoke
   Docker or a Sandbox.
 - Read Record facts only through `niceeval record snapshot`, `niceeval query`,
@@ -25,34 +26,27 @@ ViewRevision; NiceEval owns the reader, Inspection, renderer, links, and UI.
   workspace override and `link:` lock entries before committing.
 - `.niceeval/` is generated local state. Never commit an operational Record,
   copied SQLite database, static output directory, or query scratch file.
-- `niceeval-candidate.sha` is the one repository truth for a static Preview
-  candidate. It must be one lowercase 40-character approved NiceEval commit;
-  GitHub CI and Netlify both read it through `preview:build`.
-  Do not add a workflow input, Netlify environment override, `link:` lockfile
-  entry, or a second SHA source.
-- `pnpm preview:build` creates the sealed deterministic fixture, opens the
+- `pnpm preview:build` creates the sealed controlled fixture, opens the
   installed public `niceeval view --record` loopback, exchanges its one-time
   credential, and copies only discovered same-origin ViewRevision bytes into
   `.preview-site/`. It never publishes the Record, Inspection JSON, `.niceeval`,
   session cookie, credential, or a locally authored page. `pnpm preview:verify`
   rejects anything outside the static allowlist.
-- The default static build obtains and builds the exact pinned candidate, then
-  applies the main repository's `consumer:link` to a disposable copy of this
-  consumer only for the build. It never rewrites this checkout's manifest,
-  lockfile, workspace declaration, or `node_modules`. A parent agent may set
-  `NICEEVAL_PREVIEW_USE_INSTALLED_CANDIDATE=1`
-  after an authorized final candidate link for local acceptance; that override
-  is never used by CI or Netlify and must not be committed.
-- Keep the existing `niceeval-report-preview` Netlify site/check as the stable
-  deployment identity, but replace its payload with this fixed ViewRevision
-  build. After the allowlist check passes, GitHub Actions may invoke only the
-  scoped `NETLIFY_BUILD_HOOK_URL` secret. Repository automation must not carry
-  a Netlify auth token, create sites, or reconfigure the existing site.
+- `pnpm preview:build` always consumes the `niceeval` package installed in this
+  checkout. NiceEval's repository-owned Preview command clones an exact commit
+  of this repository into a disposable directory and installs one exact packed
+  candidate before invoking it. Do not add a reverse NiceEval candidate pin,
+  `link:` lockfile entry, ambient candidate override, or repository-owned
+  deployment trigger.
+- The `niceeval-report-preview` Netlify site is bound to `NiceEval/NiceEval`.
+  NiceEval `main` owns the stable URL and each NiceEval PR owns its native
+  Deploy Preview. This repository must not contain `netlify.toml`, a Netlify
+  build hook/secret, or a workflow that can deploy the site.
 - Preserve unknown changes. Do not use reset, restore, checkout, stash, or
   clean to discard work. Do not create remotes, push, publish, or send
   external messages.
 
-Minimum portable check after the compatible candidate has been linked:
+Minimum portable check after a compatible candidate has been installed:
 
 ```bash
 pnpm install --frozen-lockfile

@@ -2,7 +2,6 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { withPinnedCandidate } from "./pinned-candidate.mjs";
 import { withSealedPreviewRecord } from "./preview-record-fixture.mjs";
 
 const repositoryRoot = resolve(fileURLToPath(new URL("../", import.meta.url)));
@@ -27,16 +26,10 @@ const maximumFiles = 256;
 const maximumFileBytes = 10 * 1024 * 1024;
 
 assertInsideRepository(publishRoot);
-await withPinnedCandidate(repositoryRoot, async ({ consumerRoot, sha, source }) => {
-  // The CI/Netlify path owns its candidate and typechecks it. The explicit
-  // installed-candidate escape hatch is for a parent agent's already-validated
-  // final link (and also permits a compatibility smoke against the release).
-  if (source === "pinned") await run("pnpm", ["typecheck"], consumerRoot);
-  await withSealedPreviewRecord(consumerRoot, async ({ project, snapshot }) => {
-    await rebuildPublishedView(consumerRoot, project, snapshot);
-  });
-  process.stdout.write(`built static ViewRevision from ${source === "pinned" ? sha : "the installed candidate"}\n`);
+await withSealedPreviewRecord(repositoryRoot, async ({ project, snapshot }) => {
+  await rebuildPublishedView(repositoryRoot, project, snapshot);
 });
+process.stdout.write("built static ViewRevision from the installed niceeval candidate\n");
 
 async function rebuildPublishedView(consumerRoot, project, record) {
   await rm(publishRoot, { recursive: true, force: true });
