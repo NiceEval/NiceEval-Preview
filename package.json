@@ -12,7 +12,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "list": "niceeval list",
-    "dogfood:inspection": "node scripts/dogfood-inspection.mjs"
+    "dogfood:inspection": "node scripts/dogfood-inspection.mjs",
+    "preview:build": "node scripts/preview-build.mjs",
+    "preview:verify": "node scripts/verify-preview-site.mjs"
   },
   "dependencies": {
     "niceeval": "^0.13.3"

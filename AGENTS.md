@@ -2,7 +2,8 @@
 
 This repository dogfoods NiceEval's fixed first-party View and machine
 Inspection. It is a real public-package consumer, not a Report or page
-fixture.
+fixture. It also owns only the static deployment orchestration for a sealed
+ViewRevision; NiceEval owns the reader, Inspection, renderer, links, and UI.
 
 - Keep eval and Agent imports on public `niceeval`, `niceeval/adapter`, and
   `niceeval/expect` exports. Never import a sibling checkout's source files.
@@ -24,6 +25,27 @@ fixture.
   workspace override and `link:` lock entries before committing.
 - `.niceeval/` is generated local state. Never commit an operational Record,
   copied SQLite database, static output directory, or query scratch file.
+- `niceeval-candidate.sha` is the one repository truth for a static Preview
+  candidate. It must be one lowercase 40-character approved NiceEval commit;
+  GitHub CI and Netlify both read it through `preview:build`.
+  Do not add a workflow input, Netlify environment override, `link:` lockfile
+  entry, or a second SHA source.
+- `pnpm preview:build` creates the sealed deterministic fixture, opens the
+  installed public `niceeval view --record` loopback, exchanges its one-time
+  credential, and copies only discovered same-origin ViewRevision bytes into
+  `.preview-site/`. It never publishes the Record, Inspection JSON, `.niceeval`,
+  session cookie, credential, or a locally authored page. `pnpm preview:verify`
+  rejects anything outside the static allowlist.
+- The default static build obtains and builds the exact pinned candidate, then
+  applies the main repository's `consumer:link` to a disposable copy of this
+  consumer only for the build. It never rewrites this checkout's manifest,
+  lockfile, workspace declaration, or `node_modules`. A parent agent may set
+  `NICEEVAL_PREVIEW_USE_INSTALLED_CANDIDATE=1`
+  after an authorized final candidate link for local acceptance; that override
+  is never used by CI or Netlify and must not be committed.
+- Keep the existing `niceeval-report-preview` Netlify site/check as the stable
+  deployment identity, but replace its payload with this fixed ViewRevision
+  build. Repository automation must not create sites or call Netlify APIs.
 - Preserve unknown changes. Do not use reset, restore, checkout, stash, or
   clean to discard work. Do not create remotes, push, publish, or send
   external messages.
@@ -34,5 +56,7 @@ Minimum portable check after the compatible candidate has been linked:
 pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm dogfood:inspection
+pnpm preview:build
+pnpm preview:verify
 git status --short
 ```

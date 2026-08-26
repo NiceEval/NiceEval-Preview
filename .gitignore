@@ -3,6 +3,7 @@ node_modules/
 .niceeval-preview-dogfood-*/
 dist/
 coverage/
+.preview-site/
 
 # Fixed View consumes a CLI-created, sealed RecordSnapshot. The dogfood script
 # writes both it and temporary versioned query requests outside this checkout.
