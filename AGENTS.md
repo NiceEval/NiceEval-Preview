@@ -45,7 +45,9 @@ ViewRevision; NiceEval owns the reader, Inspection, renderer, links, and UI.
   is never used by CI or Netlify and must not be committed.
 - Keep the existing `niceeval-report-preview` Netlify site/check as the stable
   deployment identity, but replace its payload with this fixed ViewRevision
-  build. Repository automation must not create sites or call Netlify APIs.
+  build. After the allowlist check passes, GitHub Actions may invoke only the
+  scoped `NETLIFY_BUILD_HOOK_URL` secret. Repository automation must not carry
+  a Netlify auth token, create sites, or reconfigure the existing site.
 - Preserve unknown changes. Do not use reset, restore, checkout, stash, or
   clean to discard work. Do not create remotes, push, publish, or send
   external messages.

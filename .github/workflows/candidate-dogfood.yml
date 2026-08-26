@@ -51,3 +51,12 @@ jobs:
           path: .preview-site
           include-hidden-files: true
           if-no-files-found: error
+
+      - name: Trigger stable Netlify preview
+        env:
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$NETLIFY_BUILD_HOOK_URL"
+          curl --fail --silent --show-error --request POST --max-time 20 "$NETLIFY_BUILD_HOOK_URL" >/dev/null

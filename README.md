@@ -94,7 +94,9 @@ pnpm preview:verify
 Node 24 and publishes only `.preview-site/`. The historical external name can
 remain stable while the product it deploys becomes the fixed first-party View.
 The repository does not create or reconfigure the site, and no local script
-deploys or calls Netlify.
+deploys or calls Netlify. After GitHub CI builds and verifies the same
+ViewRevision, it invokes one scoped `NETLIFY_BUILD_HOOK_URL` secret so Netlify
+rebuilds `main`; the workflow never receives a Netlify auth token.
 
 ## Boundaries
 
