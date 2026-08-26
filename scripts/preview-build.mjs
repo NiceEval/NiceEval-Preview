@@ -135,9 +135,13 @@ function references(bytes, contentType) {
 function htmlReferences(source) {
   const found = [];
   if (/<base\b/iu.test(source)) throw new Error("ViewRevision must not set an HTML base URL");
-  for (const match of source.matchAll(/<(link|script|img|source)\b([^>]*)>/giu)) {
+  for (const match of source.matchAll(/<(a|link|script|img|source)\b([^>]*)>/giu)) {
     const tag = match[1].toLowerCase();
     const attributes = match[2];
+    if (tag === "a") {
+      for (const value of attributeValues(attributes, "href")) found.push({ value });
+      continue;
+    }
     if (tag === "link" && !isAssetLink(attributes)) {
       if (attributeValues(attributes, "href").length > 0) {
         throw new Error("ViewRevision contains a non-static link relation");
