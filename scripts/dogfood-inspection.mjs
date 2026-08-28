@@ -7,11 +7,18 @@ import { withSealedPreviewRecord } from "./preview-record-fixture.mjs";
 const queryProtocol = "niceeval.query/v1";
 const lifecycleProtocol = "niceeval.view-lifecycle/v1";
 const operations = Object.freeze([
+  "overview.get",
+  "experiment.get",
   "runs.list",
   "run.get",
   "run.summary",
+  "run.overview",
   "attempt.get",
+  "attempt.assertion.detail",
   "attempt.trace",
+  "attempt.trace.detail",
+  "attempt.timing",
+  "attempt.usage",
   "attempt.diff",
   "attempt.sources",
   "attempt.artifacts",
@@ -21,11 +28,18 @@ const operations = Object.freeze([
 const repositoryRoot = fileURLToPath(new URL("../", import.meta.url));
 const niceeval = join(repositoryRoot, "node_modules", ".bin", process.platform === "win32" ? "niceeval.cmd" : "niceeval");
 const resultFields = Object.freeze({
+  "overview.get": "overview",
+  "experiment.get": "experiment",
   "runs.list": "runs",
   "run.get": "run",
   "run.summary": "summary",
+  "run.overview": "runOverview",
   "attempt.get": "attempt",
+  "attempt.assertion.detail": "assertion",
   "attempt.trace": "trace",
+  "attempt.trace.detail": "detail",
+  "attempt.timing": "timing",
+  "attempt.usage": "usage",
   "attempt.diff": "diff",
   "attempt.sources": "sources",
   "attempt.artifacts": "artifacts",
@@ -35,7 +49,7 @@ const resultFields = Object.freeze({
 await withSealedPreviewRecord(repositoryRoot, async ({ leftRunId, rightRunId, locator, project, runNiceEval, snapshot }) => {
   const requestPath = join(snapshot, "..", "request.json");
 
-  const discovery = canonicalJson(runNiceEval(["query", "discover", "--record", snapshot]).stdout, "query discover");
+  const discovery = canonicalJson(runNiceEval(["query", "discover"]).stdout, "query discover");
   if (discovery.protocol !== queryProtocol) throw new Error("query discover did not return niceeval.query/v1");
   const discovered = new Set(
     Array.isArray(discovery.operations)
@@ -49,18 +63,8 @@ await withSealedPreviewRecord(repositoryRoot, async ({ leftRunId, rightRunId, lo
     throw new Error("query discover did not return the exact fixed operation catalog");
   }
 
-  const requests = [
-    { kind: "runs.list" },
-    { kind: "run.get", runId: leftRunId },
-    { kind: "run.summary", runId: leftRunId },
-    { kind: "attempt.get", locator },
-    { kind: "attempt.trace", locator },
-    { kind: "attempt.diff", locator },
-    { kind: "attempt.sources", locator },
-    { kind: "attempt.artifacts", locator },
-    { kind: "runs.compare", mode: "side-by-side", leftRunIds: [leftRunId], rightRunIds: [rightRunId] },
-  ];
-  for (const operation of requests) {
+  const seen = new Set();
+  const runQuery = async (operation) => {
     await writeFile(requestPath, `${JSON.stringify({ protocol: queryProtocol, operation })}\n`, "utf8");
     const document = canonicalJson(runNiceEval([
       "query", "run", "--record", snapshot, "--request", requestPath,
@@ -80,6 +84,38 @@ await withSealedPreviewRecord(repositoryRoot, async ({ leftRunId, rightRunId, lo
     ) {
       throw new Error(`query ${operation.kind} did not return a successful fixed-operation document`);
     }
+    seen.add(operation.kind);
+    return document;
+  };
+
+  const requests = [
+    { kind: "overview.get" },
+    { kind: "experiment.get", experimentId: "inspection/left" },
+    { kind: "runs.list" },
+    { kind: "run.get", runId: leftRunId },
+    { kind: "run.summary", runId: leftRunId },
+    { kind: "run.overview", runId: leftRunId },
+    { kind: "attempt.get", locator },
+    { kind: "attempt.trace", locator },
+    { kind: "attempt.timing", locator },
+    { kind: "attempt.usage", locator },
+    { kind: "attempt.diff", locator },
+    { kind: "attempt.sources", locator },
+    { kind: "attempt.artifacts", locator },
+    { kind: "runs.compare", mode: "side-by-side", leftRunIds: [leftRunId], rightRunIds: [rightRunId] },
+  ];
+  for (const operation of requests) {
+    const document = await runQuery(operation);
+    if (operation.kind === "attempt.get") {
+      const entryId = document.attempt?.assertions?.entries?.[0]?.entryId;
+      if (typeof entryId !== "string") throw new Error("attempt.get did not expose an Assertion entryId");
+      await runQuery({ kind: "attempt.assertion.detail", locator, entryId });
+    }
+    if (operation.kind === "attempt.trace") {
+      const itemId = document.trace?.conversation?.items?.[0]?.itemId;
+      if (typeof itemId !== "string") throw new Error("attempt.trace did not expose an itemId");
+      await runQuery({ kind: "attempt.trace.detail", locator, selector: { kind: "item", itemId } });
+    }
     // Direct Agents intentionally have no Sandbox diff or custom artifacts.
     // Those operations must surface a closed domain state, never an invented value.
     if (operation.kind === "attempt.diff" && document.diff?.state !== "not-recorded") {
@@ -88,6 +124,9 @@ await withSealedPreviewRecord(repositoryRoot, async ({ leftRunId, rightRunId, lo
     if (operation.kind === "attempt.artifacts" && document.artifacts?.state !== "not-recorded") {
       throw new Error("query attempt.artifacts did not expose its exact not-recorded state");
     }
+  }
+  if (seen.size !== operations.length || operations.some((operation) => !seen.has(operation))) {
+    throw new Error("query run did not exercise the exact fixed operation catalog");
   }
 
   await verifyView(snapshot, project);
@@ -146,7 +185,7 @@ async function verifyView(record, project) {
     if (session.status !== 204 || cookie === null) throw new Error("view did not exchange its one-time credential");
     const shell = await fetch(new URL("/", url), { headers: { cookie, origin: url.origin } });
     const html = await shell.text();
-    if (shell.status !== 200 || !html.includes("<title>NiceEval View</title>") || !html.includes("Overview")) {
+    if (shell.status !== 200 || !html.includes("<title>NiceEval overview</title>")) {
       throw new Error("view did not serve the fixed Overview shell");
     }
   } finally {

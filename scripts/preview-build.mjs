@@ -184,7 +184,10 @@ function cssReferences(source) {
 function javaScriptReferences(source) {
   const found = [];
   for (const match of source.matchAll(/(?:import\s*(?:\(|[^"']*?from\s*)|export\s+[^"']*?from\s*)(["'])([^"']+)\1/giu)) {
-    found.push({ value: match[2] });
+    const value = match[2];
+    if (value.startsWith("/") || value.startsWith("./") || value.startsWith("../")) {
+      found.push({ value });
+    }
   }
   return found;
 }
