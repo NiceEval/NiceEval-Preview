@@ -27,7 +27,7 @@ fixture and its ViewRevision build/verification commands.
 - `.niceeval/` is generated local state. Never commit an operational Record,
   copied SQLite database, static output directory, or query scratch file.
 - `pnpm preview:build` creates the sealed controlled fixture, opens the
-  installed public `niceeval view --record` loopback, exchanges its one-time
+  installed public operational `niceeval view` loopback, exchanges its one-time
   credential, and copies only discovered same-origin ViewRevision bytes into
   `.preview-site/`. It never publishes the Record, Inspection JSON, `.niceeval`,
   session cookie, credential, or a locally authored page. `pnpm preview:verify`

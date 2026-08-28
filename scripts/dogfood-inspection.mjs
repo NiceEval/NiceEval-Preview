@@ -67,7 +67,7 @@ await withSealedPreviewRecord(repositoryRoot, async ({ leftRunId, rightRunId, lo
   const runQuery = async (operation) => {
     await writeFile(requestPath, `${JSON.stringify({ protocol: queryProtocol, operation })}\n`, "utf8");
     const document = canonicalJson(runNiceEval([
-      "query", "run", "--record", snapshot, "--request", requestPath,
+      "query", "run", "--request", requestPath,
     ]).stdout, `query ${operation.kind}`);
     const resultField = resultFields[operation.kind];
     if (
@@ -129,7 +129,7 @@ await withSealedPreviewRecord(repositoryRoot, async ({ leftRunId, rightRunId, lo
     throw new Error("query run did not exercise the exact fixed operation catalog");
   }
 
-  await verifyView(snapshot, project);
+  await verifyView(project);
   process.stdout.write("fixed View and Inspection dogfood passed\n");
 });
 
@@ -157,9 +157,9 @@ function json(stdout) {
   }
 }
 
-async function verifyView(record, project) {
+async function verifyView(project) {
   const child = spawn(niceeval, [
-    "view", "--record", record, "--no-open", "--port", "0", "--json",
+    "view", "--no-open", "--port", "0", "--json",
   ], { cwd: project, stdio: ["ignore", "pipe", "pipe"], env: process.env });
   let stderr = "";
   const lifecycle = lifecycleCollector();
@@ -198,7 +198,7 @@ async function verifyView(record, project) {
       exit.code !== 0 || readyEvents.length !== 1 || terminalEvents.length !== 1 ||
       terminalEvents[0]?.event !== "closed" || lifecycle.events.at(-1)?.event !== "closed"
     ) {
-      throw new Error(`view did not shut down with one terminal closed event (code=${String(exit.code)}, stderrBytes=${Buffer.byteLength(stderr)})`);
+      throw new Error(`view did not shut down with one terminal closed event (code=${String(exit.code)}, stderr=${JSON.stringify(stderr)})`);
     }
   }
 }

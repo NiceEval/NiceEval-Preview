@@ -70,6 +70,7 @@ function runIds(stdout) {
   return [...new Set([
     ...collectJsonValues(stdout, "runId"),
     ...collectJsonValues(stdout, "runIds"),
+    ...collectJsonValues(stdout, "createdRunIds"),
   ])].filter((value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(value));
 }
 

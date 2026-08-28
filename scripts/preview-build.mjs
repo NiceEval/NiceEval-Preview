@@ -26,16 +26,16 @@ const maximumFiles = 256;
 const maximumFileBytes = 10 * 1024 * 1024;
 
 assertInsideRepository(publishRoot);
-await withSealedPreviewRecord(repositoryRoot, async ({ project, snapshot }) => {
-  await rebuildPublishedView(repositoryRoot, project, snapshot);
+await withSealedPreviewRecord(repositoryRoot, async ({ project }) => {
+  await rebuildPublishedView(repositoryRoot, project);
 });
 process.stdout.write("built static ViewRevision from the installed niceeval candidate\n");
 
-async function rebuildPublishedView(consumerRoot, project, record) {
+async function rebuildPublishedView(consumerRoot, project) {
   await rm(publishRoot, { recursive: true, force: true });
   await mkdir(publishRoot, { recursive: true });
   const executable = resolve(consumerRoot, "node_modules", ".bin", process.platform === "win32" ? "niceeval.cmd" : "niceeval");
-  const child = spawn(executable, ["view", "--record", record, "--no-open", "--port", "0", "--json"], {
+  const child = spawn(executable, ["view", "--no-open", "--port", "0", "--json"], {
     cwd: project,
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],

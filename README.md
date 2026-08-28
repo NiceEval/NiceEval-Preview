@@ -51,7 +51,7 @@ It then:
    `attempt.sources`, `attempt.artifacts`, and `runs.compare`;
 3. accepts only successful canonical query documents, including explicit
    closed `not-recorded` states where this direct fixture has no fact;
-4. starts `niceeval view --record … --no-open --port 0 --json`, completes its
+4. starts `niceeval view --no-open --port 0 --json` from the operational Record project, completes its
    one-time loopback credential exchange, verifies the fixed Overview shell,
    then sends `SIGTERM` and requires the terminal `closed` lifecycle event.
 
@@ -71,7 +71,7 @@ pnpm preview:verify
 ```
 
 The build reuses the offline controlled sealed fixture, opens only the installed
-public `niceeval view --record` loopback, completes the one-time credential
+public operational `niceeval view` loopback, completes the one-time credential
 exchange, then recursively copies the fixed revision's discovered same-origin
 assets byte-for-byte into `.preview-site/`. It never imports candidate
 `dist` files or creates its own HTML, navigation, renderer, or interpretation.
