@@ -29,6 +29,21 @@ function usage(multiplier = 1, observedCost = true): Usage {
   };
 }
 
+function usageForModel(
+  model: string | undefined,
+  defaultMultiplier = 1,
+  observedCost = true,
+): Usage {
+  const multiplier = {
+    "preview-score-low": 1,
+    "preview-score-medium": 3,
+    "preview-score-high": 6,
+    "preview-score-divergent": 10,
+  }[model ?? ""] ?? defaultMultiplier;
+
+  return usage(multiplier, observedCost);
+}
+
 function completedMessage(text: string): StreamEvent {
   return { type: "message", role: "assistant", text };
 }
@@ -60,7 +75,7 @@ export const deterministicAgent = defineAgent({
       return {
         status: "completed",
         data: { approved: true, requestId: held.requestId, ordinal },
-        usage: usage(1, false),
+        usage: usageForModel(ctx.model, 1, false),
         events: [
           {
             type: "operation.started",
@@ -92,7 +107,7 @@ export const deterministicAgent = defineAgent({
       return {
         status: "waiting",
         data: { waitingFor: requestId, ordinal },
-        usage: usage(1, false),
+        usage: usageForModel(ctx.model, 1, false),
         events: [
           { type: "thinking", text: "A human must approve the deterministic deploy." },
           {
@@ -134,7 +149,7 @@ export const deterministicAgent = defineAgent({
           mimeType: file?.mimeType ?? null,
           ordinal,
         },
-        usage: usage(),
+        usage: usageForModel(ctx.model),
         events: [
           { type: "thinking", text: "Inspecting the attached deterministic brief." },
           completedMessage("Attachment received: brief.txt"),
@@ -148,7 +163,7 @@ export const deterministicAgent = defineAgent({
       return {
         status: "completed",
         data: { marker, ordinal },
-        usage: usage(),
+        usage: usageForModel(ctx.model),
         events: [
           {
             type: "operation.started",
@@ -190,7 +205,7 @@ export const deterministicAgent = defineAgent({
           flags: ctx.flags,
           ordinal,
         },
-        usage: usage(2),
+        usage: usageForModel(ctx.model, 2),
         events: [
           { type: "message", role: "user", text: "Internal deterministic context message." },
           { type: "thinking", text: "Plan the offline preview response." },
@@ -263,7 +278,7 @@ export const deterministicAgent = defineAgent({
       return {
         status: "completed",
         data: { fixture: input.text, ordinal },
-        usage: usage(),
+        usage: usageForModel(ctx.model),
         events: [completedMessage(`Completed ${input.text}.`)],
       };
     }

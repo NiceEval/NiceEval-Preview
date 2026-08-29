@@ -2,14 +2,13 @@ import { defineExperiment } from "niceeval";
 import { deterministicAgent } from "../../agents/deterministic.ts";
 
 export default defineExperiment({
-  description: "Score gallery candidate selected by Eval metadata/tags with full attempts",
+  description: "Medium-cost Score gallery condition with a materially higher quality",
   agent: deterministicAgent,
-  model: "preview-candidate",
+  model: "preview-score-medium",
   reasoningEffort: "medium",
-  flags: { condition: "candidate", offline: true, richerContext: true },
-  labels: { line: "score-gallery", condition: "candidate", rank: "candidate" },
+  flags: { condition: "medium", offline: true, richerContext: true },
+  labels: { line: "score-gallery", condition: "medium", rank: "medium" },
   attempts: 2,
   earlyExit: false,
-  evals: (evalDescriptor) =>
-    evalDescriptor.evaluationKind === "score" && evalDescriptor.tags.includes("gallery"),
+  evals: ["score/rubric/complete"],
 });

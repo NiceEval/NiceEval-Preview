@@ -2,19 +2,16 @@ import { defineExperiment } from "niceeval";
 import { deterministicAgent } from "../../agents/deterministic.ts";
 
 export default defineExperiment({
-  description: "Score gallery baseline with strict sequential early exit",
+  description: "Low-cost, low-quality Score gallery baseline",
   agent: deterministicAgent,
-  model: "preview-baseline",
+  model: "preview-score-low",
   reasoningEffort: "low",
-  flags: { condition: "baseline", offline: true },
-  labels: { line: "score-gallery", condition: "baseline", rank: "baseline" },
+  flags: { condition: "low", offline: true },
+  labels: { line: "score-gallery", condition: "low", rank: "low" },
   attempts: 2,
   earlyExit: true,
   maxConcurrency: 1,
   evals: [
-    "score/matchers",
-    "score/rubric/complete",
-    "score/rubric/stopped",
-    "score/rubric/zero",
+    "score/gallery-low",
   ],
 });
