@@ -70,8 +70,9 @@ its WAL files, or any other SQLite database.
 ## Public-CLI review and handoff
 
 Do not inspect the snapshot as a private SQLite format. The NiceEval repository
-pins the reviewed Preview commit, verifies the snapshot as a regular sealed
-SQLite input, and loads it with the current candidate View.
+resolves the latest Preview `origin/main`, records its exact commit in the build
+receipt, verifies the snapshot as a regular sealed SQLite input, and loads it
+with the current candidate View.
 
 ```bash
 git status --short

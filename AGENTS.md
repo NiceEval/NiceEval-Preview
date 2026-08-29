@@ -13,7 +13,8 @@ one human-reviewed, tracked sealed `RecordSnapshot`.
   `pnpm exec niceeval record snapshot --output snapshot/record.sqlite`.
   Review the operational Record via public `niceeval query`, `niceeval show`,
   and `niceeval view` before export. The NiceEval repository's Preview build
-  validates and reads the sealed snapshot after the pinned commit is updated.
+  resolves the latest `origin/main`, records that exact commit in its build
+  receipt, then validates and reads the sealed snapshot.
 - The deterministic Direct Agent is offline and provider-free: it must not read
   secrets, call providers, use `fetch`, or access the network. Do not claim the
   full fixture is Docker-free: the declared sandbox Experiments use the
