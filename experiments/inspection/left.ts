@@ -1,11 +1,13 @@
 import { defineExperiment } from "niceeval";
-import { deterministicAgent } from "../../agents/deterministic.ts";
+import { PREVIEW_CODEX_MODEL, previewCodexAgent } from "../../agents/codex.ts";
+import { previewNodeSandbox } from "../../sandboxes/node.ts";
 
 export default defineExperiment({
-  description: "Deterministic left Run for fixed View and Inspection dogfooding",
-  agent: deterministicAgent,
-  model: "inspection-left",
-  flags: { dogfood: "inspection", side: "left", offline: true },
+  description: "Real Codex left Run for View and Inspection dogfooding",
+  agent: previewCodexAgent,
+  model: PREVIEW_CODEX_MODEL,
+  sandbox: previewNodeSandbox(),
+  flags: { dogfood: "inspection", side: "left", runtime: "codex" },
   labels: { fixture: "fixed-view", side: "left" },
   evals: ["states/pass"],
 });

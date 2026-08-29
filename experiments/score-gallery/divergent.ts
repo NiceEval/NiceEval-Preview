@@ -1,12 +1,14 @@
 import { defineExperiment } from "niceeval";
-import { deterministicAgent } from "../../agents/deterministic.ts";
+import { PREVIEW_CODEX_MODEL, previewCodexAgent } from "../../agents/codex.ts";
+import { previewNodeSandbox } from "../../sandboxes/node.ts";
 
 export default defineExperiment({
   description: "Distinct high-cost, lower-quality Score gallery condition",
-  agent: deterministicAgent,
-  model: "preview-score-divergent",
+  agent: previewCodexAgent,
+  model: PREVIEW_CODEX_MODEL,
+  sandbox: previewNodeSandbox(),
   reasoningEffort: "medium",
-  flags: { condition: "divergent", offline: true, alternateStrategy: true },
+  flags: { condition: "divergent", runtime: "codex", alternateStrategy: true },
   labels: { line: "score-gallery", condition: "divergent", rank: "divergent" },
   attempts: 2,
   earlyExit: false,

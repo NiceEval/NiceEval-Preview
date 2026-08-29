@@ -1,12 +1,14 @@
 import { defineExperiment } from "niceeval";
-import { deterministicAgent } from "../../agents/deterministic.ts";
+import { PREVIEW_CODEX_MODEL, previewCodexAgent } from "../../agents/codex.ts";
+import { previewNodeSandbox } from "../../sandboxes/node.ts";
 
 export default defineExperiment({
   description: "Low-cost, low-quality Score gallery baseline",
-  agent: deterministicAgent,
-  model: "preview-score-low",
+  agent: previewCodexAgent,
+  model: PREVIEW_CODEX_MODEL,
+  sandbox: previewNodeSandbox(),
   reasoningEffort: "low",
-  flags: { condition: "low", offline: true },
+  flags: { condition: "low", runtime: "codex" },
   labels: { line: "score-gallery", condition: "low", rank: "low" },
   attempts: 2,
   earlyExit: true,

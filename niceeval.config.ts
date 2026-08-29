@@ -1,9 +1,12 @@
 import { defineConfig } from "niceeval";
+import { loadEnvFile } from "node:process";
+
+loadEnvFile();
 
 export default defineConfig({
   name: {
-    en: "NiceEval deterministic preview",
-    "zh-CN": "NiceEval 确定性预览",
+    en: "NiceEval Preview",
+    "zh-CN": "NiceEval 预览",
   },
   timeoutMs: 90_000,
   maxConcurrency: 4,
