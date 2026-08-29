@@ -1,20 +1,19 @@
 # NiceEval Preview
 
 This is a declaration-only, real Preview data repository. Its committed product
-input is exactly one sealed `RecordSnapshot` at `snapshot/record.sqlite`.
+input is exactly one canonical SQLite Record at `.niceeval/record.sqlite`.
 NiceEval owns the reader, Inspection,
 first-party View, View assets, and Netlify deployment; this repository owns the
-declared Experiments and the reviewed snapshot.
+declared Experiments and the reviewed Record.
 
 ```text
-all declared Experiments → sealed Record → snapshot/record.sqlite → query | view
+all declared Experiments → .niceeval/record.sqlite → query | view
 ```
 
 There are no JavaScript orchestration scripts and no CI in this repository.
-Maintainers regenerate the snapshot locally with the public CLI, review its
-effects, then manually commit and push it. The generated operational
-`.niceeval/` Record, any other database, query scratch data, and View assets
-remain untracked.
+Maintainers regenerate the Record locally with the public CLI, review its
+effects, then manually commit and push it. Staging databases, WAL/SHM files,
+query scratch data, and View assets remain untracked.
 
 ## Local refresh contract
 
@@ -46,39 +45,32 @@ be reused, with the selector-free command verified from the installed CLI:
 pnpm exec niceeval exp --rerun all
 ```
 
-Review the operational Record through NiceEval's public readers before export.
-`view` emits lifecycle NDJSON; its ready URL contains a one-time credential and
-must not be copied into output, logs, or commits. Stop the local View after
-review.
+Review the canonical Record through NiceEval's public readers.
+`view` prints a local URL whose credential must not be copied into output,
+logs, or commits. Stop the local View after review.
 
 ```bash
 pnpm exec niceeval query discover
-pnpm exec niceeval view --no-open --port 0 --json
+pnpm exec niceeval view --no-open --port 41739
 ```
 
-After the invocation has sealed its Runs, export the sole tracked portable input
-to its fixed path:
-
-```bash
-pnpm exec niceeval record snapshot --output snapshot/record.sqlite
-```
-
-`record snapshot` is the only supported export: it validates the exact seal and
-writes a sealed-only `RecordSnapshot`. Do not copy `.niceeval/record/record.sqlite`,
-its WAL files, or any other SQLite database.
+The invocation's graceful exit closes its writer, checkpoints and truncates the
+WAL, and validates `.niceeval/record.sqlite` for direct movement. There is no
+snapshot/export/compact/verify step. Runs may remain active; only atomically
+published Attempts are visible to readers.
 
 ## Public-CLI review and handoff
 
-Do not inspect the snapshot as a private SQLite format. The NiceEval repository
+Do not inspect the Record as a private SQLite format. The NiceEval repository
 resolves the latest Preview `origin/main`, records its exact commit in the build
-receipt, verifies the snapshot as a regular sealed SQLite input, and loads it
+receipt, imports the Record as hostile SQLite, and loads it
 with the current candidate View.
 
 ```bash
 git status --short
 ```
 
-Inspect the diff and status, including the single snapshot, then the maintainer
+Inspect the diff and status, including the single Record, then the maintainer
 manually commits and pushes the reviewed changes. This repository never commits
 or pushes on their behalf.
 
@@ -94,12 +86,11 @@ agent.
 
 ## Boundaries
 
-- The tracked `snapshot/record.sqlite` is the one portable input;
+- The tracked `.niceeval/record.sqlite` is the one portable input;
   it may contain sensitive Run content and needs human review before commit.
 - `query` is for machine inspection; `show` and `view` are public human review
   surfaces. All read sealed facts only.
 - No Report, Page, Analysis, custom renderer, theme, HTML export, static-site
   build, Netlify configuration, deployment hook, or CI belongs here.
-- `snapshot/README.md` records the path contract. `snapshot/receipt.json` is
-  optional provenance generated only by the maintainer after the real run; it
-  never substitutes a handwritten receipt for a CLI-created snapshot.
+- NiceEval itself owns publication atomicity and graceful portability. This
+  repository does not maintain a second receipt or export format.

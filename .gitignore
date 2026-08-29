@@ -1,5 +1,6 @@
 node_modules/
-.niceeval/
+.niceeval/*
+!.niceeval/record.sqlite
 .niceeval-preview-dogfood-*/
 dist/
 coverage/
@@ -11,10 +12,7 @@ coverage/
 *.sqlite-*
 *.db
 *.db-*
-snapshot/*.sqlite
-!snapshot/record.sqlite
-snapshot/*.json
-!snapshot/receipt.json
+!.niceeval/record.sqlite
 
 # Do not commit generated query requests, operational Records, or View assets.
 *.query.json
