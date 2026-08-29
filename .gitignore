@@ -5,8 +5,19 @@ dist/
 coverage/
 .preview-site/
 
-# Fixed View consumes a CLI-created, sealed RecordSnapshot. The dogfood script
-# writes both it and temporary versioned query requests outside this checkout.
+# The sole portable Record input committed by this repository. Every other
+# database or RecordSnapshot is operational/generated state.
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+snapshot/*.sqlite
+!snapshot/record.sqlite
+snapshot/*.json
+!snapshot/receipt.json
+
+# Do not commit generated query requests, operational Records, or View assets.
+*.query.json
 
 # pnpm dev:link may leave machine-local diagnostics; its workspace override and
 # lockfile changes must be restored before committing.

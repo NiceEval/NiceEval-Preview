@@ -1,29 +1,29 @@
 # NiceEval Preview
 
-This repository is an offline controlled downstream dogfood for NiceEval's fixed
-post-run interfaces. It proves one sealed Record can feed both audiences:
+This is a declaration-only, real Preview data repository. Its committed product
+input is exactly one sealed `RecordSnapshot` at `snapshot/record.sqlite`.
+NiceEval owns the reader, Inspection,
+first-party View, View assets, and Netlify deployment; this repository owns the
+declared Experiments and the reviewed snapshot.
 
 ```text
-controlled Eval Runs → sealed Record → RecordSnapshot → query | View
+all declared Experiments → sealed Record → snapshot/record.sqlite → query | view
 ```
 
-`niceeval query` is the versioned machine interface for AI and CI.
-`niceeval view` is the fixed loopback interface for a human reader. Neither
-interface loads a project Report, page, component, renderer, or theme.
+There are no JavaScript orchestration scripts and no CI in this repository.
+Maintainers regenerate the snapshot locally with the public CLI, review its
+effects, then manually commit and push it. The generated operational
+`.niceeval/` Record, any other database, query scratch data, and View assets
+remain untracked.
 
-## Requirements
+## Local refresh contract
 
-- Node.js 24 or newer
-- pnpm 11.18.0
-- A NiceEval runtime that provides `record snapshot`, `query`, and the fixed
-  loopback `view`
+Requirements: Node.js 24+, pnpm 11.18.0, Docker available for the sandbox
+Experiments, and a compatible installed public `niceeval` package. Credentials
+come only from the maintainer's local environment or untracked `.env`; never
+read, print, copy, or commit `.env`.
 
-The fixture itself makes no paid model call, performs no Docker work, and uses
-an offline controlled Direct Agent.
-
-## Dogfood
-
-Install the public dependency to typecheck the consumer:
+Start by installing and typechecking the consumer:
 
 ```bash
 corepack enable
@@ -31,75 +31,74 @@ pnpm install --frozen-lockfile
 pnpm typecheck
 ```
 
-The published baseline can predate the new Record and Inspection commands. For
-final acceptance, the parent task links the compatible NiceEval candidate, then
-runs this one command from this repository:
+Discover the complete declared Experiment catalog before spending provider or
+Docker resources. Do not add an Experiment/eval selector, tag filter, or a
+repository-maintained selection list:
 
 ```bash
-pnpm dogfood:inspection
+pnpm exec niceeval exp list --json
 ```
 
-The command creates an isolated temporary consumer project and runs two direct
-controlled experiments (`inspection/left` and `inspection/right`). It never
-deletes or reuses this checkout's existing `.niceeval` data. It seals the Runs,
-exports a sealed-only `RecordSnapshot`, and uses that snapshot for every read.
-It then:
-
-1. runs `niceeval query discover` and requires all fixed operations;
-2. sends a legal `niceeval.query/v1` request for `runs.list`, `run.get`,
-   `run.summary`, `attempt.get`, `attempt.trace`, `attempt.diff`,
-   `attempt.sources`, `attempt.artifacts`, and `runs.compare`;
-3. accepts only successful canonical query documents, including explicit
-   closed `not-recorded` states where this direct fixture has no fact;
-4. starts `niceeval view --no-open --port 0 --json` from the operational Record project, completes its
-   one-time loopback credential exchange, verifies the fixed Overview shell,
-   then sends `SIGTERM` and requires the terminal `closed` lifecycle event.
-
-The Record and snapshot are temporary local inputs. A raw operational SQLite
-file, its copy, and arbitrary external files are never passed to `--record`.
-
-## PR ViewRevision preview
-
-The NiceEval repository owns the candidate and deployment identity. Its
-repository Preview command pins an exact commit of this consumer, clones that
-commit into a disposable directory, installs the exact packed NiceEval
-candidate, and invokes this repository's build and verifier:
+Regenerate every discovered Experiment, including results that would otherwise
+be reused, with the selector-free command verified from the installed CLI:
 
 ```bash
-pnpm preview:build
-pnpm preview:verify
+pnpm exec niceeval exp --rerun all
 ```
 
-The build reuses the offline controlled sealed fixture, opens only the installed
-public operational `niceeval view` loopback, completes the one-time credential
-exchange, then recursively copies the fixed revision's discovered same-origin
-assets byte-for-byte into `.preview-site/`. It never imports candidate
-`dist` files or creates its own HTML, navigation, renderer, or interpretation.
-The verifier permits only discovered static ViewRevision file types and rejects
-SQLite, Inspection JSON, `.niceeval`, credentials, and unexpected paths.
+Review the operational Record through NiceEval's public readers before export.
+`view` emits lifecycle NDJSON; its ready URL contains a one-time credential and
+must not be copied into output, logs, or commits. Stop the local View after
+review.
 
-`niceeval-report-preview.netlify.app` is the stable `NiceEval/NiceEval` `main`
-deployment. A NiceEval pull request receives its own native Netlify Deploy
-Preview, built from that PR checkout. The green check only says that the
-current PR candidate produced a visual dogfood deployment; it is not a security
-proof and does not replace NiceEval CI or E2E. Acceptance records the current
-head and the immutable deploy-ID URL instead of treating the mutable PR alias
-as evidence.
+```bash
+pnpm exec niceeval query discover
+pnpm exec niceeval view --no-open --port 0 --json
+```
 
-This repository has no Netlify configuration, build hook, deploy workflow, or
-NiceEval candidate SHA. Its public dependency remains a consumer baseline; the
-NiceEval repository's exact orchestrator pin and packed candidate are the only
-deployment inputs.
+After the invocation has sealed its Runs, export the sole tracked portable input
+to its fixed path:
+
+```bash
+pnpm exec niceeval record snapshot --output snapshot/record.sqlite
+```
+
+`record snapshot` is the only supported export: it validates the exact seal and
+writes a sealed-only `RecordSnapshot`. Do not copy `.niceeval/record/record.sqlite`,
+its WAL files, or any other SQLite database.
+
+## Public-CLI review and handoff
+
+Do not inspect the snapshot as a private SQLite format. The NiceEval repository
+pins the reviewed Preview commit, verifies the snapshot as a regular sealed
+SQLite input, and loads it with the current candidate View.
+
+```bash
+git status --short
+```
+
+Inspect the diff and status, including the single snapshot, then the maintainer
+manually commits and pushes the reviewed changes. This repository never commits
+or pushes on their behalf.
+
+## Fixture execution facts
+
+Most Experiments use the offline deterministic Direct Agent. It makes no
+provider call and does not use Docker. This does **not** make the complete
+refresh Docker-free: `sandbox-group` and `sandbox-reuse` use the deterministic
+Sandbox Agent with NiceEval's `dockerSandbox` and the pinned Node 24 image.
+Accordingly, a full `exp --rerun all` may pull/use Docker while still making no
+AI-provider call. The fixture is intentionally not converted to a provider
+agent.
 
 ## Boundaries
 
-- Facts belong to the sealed Record; the snapshot is the only portable input.
-- Inspection owns selector, cutoff, missing facts, evidence, and comparison.
-- View and query independently consume closed Inspection results.
-- This repository contains no custom static preview product, HTML export, `show`,
-  `insight`, Analysis, Report, custom page, or presentation extension. Its
-  build step copies only bytes emitted by the fixed ViewRevision; NiceEval's
-  repository-owned deployment publishes them.
-
-The scripts do not create remotes, push, publish, start Docker, or call an AI
-provider.
+- The tracked `snapshot/record.sqlite` is the one portable input;
+  it may contain sensitive Run content and needs human review before commit.
+- `query` is for machine inspection; `show` and `view` are public human review
+  surfaces. All read sealed facts only.
+- No Report, Page, Analysis, custom renderer, theme, HTML export, static-site
+  build, Netlify configuration, deployment hook, or CI belongs here.
+- `snapshot/README.md` records the path contract. `snapshot/receipt.json` is
+  optional provenance generated only by the maintainer after the real run; it
+  never substitutes a handwritten receipt for a CLI-created snapshot.

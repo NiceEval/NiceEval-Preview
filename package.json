@@ -3,18 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Deterministic fixed View and Inspection dogfood for NiceEval",
+  "description": "Tracked sealed RecordSnapshot fixture for NiceEval Preview",
   "license": "MIT",
   "engines": {
     "node": ">=24"
   },
   "packageManager": "pnpm@11.18.0",
   "scripts": {
-    "typecheck": "tsc --noEmit",
-    "list": "niceeval list",
-    "dogfood:inspection": "node scripts/dogfood-inspection.mjs",
-    "preview:build": "node scripts/preview-build.mjs",
-    "preview:verify": "node scripts/verify-preview-site.mjs"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "niceeval": "^0.13.3"
