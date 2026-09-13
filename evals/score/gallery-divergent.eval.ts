@@ -12,7 +12,7 @@ export default defineScoreEval({
       name: "divergent-tier deterministic quality",
       score: () => 0.4,
     });
-    t.check(turn.message, quality.atLeast(0))
+    t.check(turn.message, quality).gate(0)
       .score(20)
       .label("Divergent tier earns 40% of its available Score");
   },

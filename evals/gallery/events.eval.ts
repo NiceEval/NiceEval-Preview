@@ -62,12 +62,12 @@ export default defineEval({
       events.maxCost(0.01).label("Turn observed cost is bounded");
       const eventData: unknown = events.data;
       t.check(eventData, isDefined<unknown>("event gallery data")).label("Structured data exists");
-      t.check(events.message, exactSimilarity.atLeast(1))
+      t.check(events.message, exactSimilarity).gate(1)
         .label("Measurement threshold is recorded");
       t.check(events.message, defineScoreMatch({
         name: "preview gate measurement",
         score: (value: string) => (value.includes("PREVIEW_OK") ? 1 : 0),
-      }).atLeast(1)).gate().label("Measurement gate passes");
+      })).gate(1).label("Measurement gate passes");
       t.check(events.events, satisfies("skill.loaded exists", (items) =>
         items.some((event) => event.type === "skill.loaded" && event.skill === "preview-reporting"),
       )).label("Skill load is recorded");

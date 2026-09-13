@@ -13,7 +13,7 @@ export default defineScoreEval({
       score: () => 0.65,
     });
 
-    t.check(turn.message, quality.atLeast(0))
+    t.check(turn.message, quality).gate(0)
       .score(20)
       .label("High tier earns 65% of its available Score");
   },
