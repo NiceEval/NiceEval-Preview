@@ -8,7 +8,6 @@ const judging = defineJudge({
 export default defineEval({
   description: "Judge capability without model configuration: zero-network unavailable path",
   tags: ["judge", "state", "unavailable"],
-  judge: judging,
   async test(t) {
     const turn = await t.send("preview/state/judge-unavailable");
     turn.succeeded().label("Direct Agent completed before Judge evaluation");
